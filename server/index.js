@@ -78,4 +78,12 @@ app.post('/api/chat', async (req, res) => {
   }
 })
 
+//connect to frontend
+app.use(express.static(join(__dirname, '../dist')))
+
+//catch all routes so the server always returns index.html and lets the frontend handle the routing for the future
+app.get('/{*splat}', (req, res) => {
+  res.sendFile(join(__dirname, '../dist', 'index.html'))
+})
+
 app.listen(3000, () => console.log('Server running on http://localhost:3000'))
