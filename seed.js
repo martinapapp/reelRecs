@@ -1,8 +1,8 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { neon } from '@neondatabase/serverless'
 
-const geminiClient = new GoogleGenerativeAI(process.env.VITE_GEMINI_API_KEY)
-const sql = neon(process.env.VITE_NEON_URL, { disableWarningInBrowsers: true })
+const geminiClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+const sql = neon(process.env.NEON_URL, { disableWarningInBrowsers: true })
 
 const movies = [
   `Oppenheimer: 2023 | R | 3h | 8.6 rating
@@ -51,7 +51,11 @@ async function seed() {
         const title = movie.split('\n')[0].split(':')[0].trim()
         console.log(`Embedding: ${title}...`)
 
-        const result = await embeddingModel.embedContent(movie)
+        const result = await embeddingModel.embedContent({
+          content: { parts: [{ text: movie }], role: 'user' },
+          taskType: 'RETRIEVAL_DOCUMENT',
+          outputDimensionality: 768
+        })
         const embedding = result.embedding.values
         const vectorStr = `[${embedding.join(',')}]`
 
@@ -69,3 +73,4 @@ async function seed() {
     console.error(`Error: ${err}`)
   }
 }
+seed()
