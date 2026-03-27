@@ -60,6 +60,27 @@ npm start        // Starts the Express server (serves the built frontend + API)
 ```
 
 ---
+## Challenges & Solutions
+
+**Embedding dimension mismatch** — Migrating from OpenAI (`text-embedding-ada-002`, 1536 dims) to Gemini (`gemini-embedding-001`, 768 dims) broke all similarity searches silently. Had to drop the vector column, recreate it with the correct dimensions, and re-seed the entire database. Lesson: embeddings are model-specific and not interchangeable.
+
+**Gemini response parsing** — OpenAI returns `.choices[0].message.content`, Gemini returns `.candidates[0].content.parts[0].text`. The server was silently returning `undefined` to the client until I added explicit response validation and a proper error fallback.
+
+**Single-service deploy on Render** — The original setup ran Vite and Express as two separate processes. Fixed by having Express serve the compiled `dist/` folder in production, which also eliminated the API key leak — keys moved from `VITE_`-prefixed (visible in the browser bundle) to plain server-side environment variables.
+
+## Key Technical Decisions
+
+**RAG over fine-tuning** — Cheaper, faster to iterate, and the knowledge base updates with a reseed rather than a retrain.
+
+**Server-side only API calls** — After discovering the original version exposed keys via `VITE_` prefix, all Gemini and Neon requests were moved behind Express. The client never touches the keys.
+
+## What I'd Do Differently
+
+- Batch the seed script with rate-limit delays for larger datasets
+- Stream the Gemini response (SSE) to avoid the cold-start timeout feeling broken
+- Move model name and vector dimensions into a single config file — currently hardcoded in two places
+
+---
 
 ## Development
 
